@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bewertungsraster — Kriterienbasierte FM-Aufgabentypologie</title>
+<style>
+  :root {
+    --ink: #1c2024;
+    --paper: #f7f5f1;
+    --panel: #ffffff;
+    --line: #d8d3c8;
+    --muted: #6b6459;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: "SF Mono", "Consolas", monospace;
+
+    --zone-auto: #3f6b4f;
+    --zone-auto-bg: #e9efe7;
+    --zone-aug: #8a6d2f;
+    --zone-aug-bg: #f3ecd9;
+    --zone-human: #7a3b3b;
+    --zone-human-bg: #f3e3e1;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.5;
+    padding: 48px 24px 80px;
+  }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 40px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 24px;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-size: 30px;
+    font-weight: 500;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 560px;
+  }
+
+  .dims {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-bottom: 32px;
+  }
+
+  .dim {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 18px 20px;
+  }
+
+  .dim-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+
+  .dim-name {
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  .dim-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 3px;
+    color: #fff;
+    white-space: nowrap;
+  }
+
+  .tag-principled { background: var(--zone-human); }
+  .tag-liability { background: var(--zone-aug); }
+  .tag-empirical { background: var(--muted); }
+
+  .dim-question {
+    color: var(--muted);
+    font-size: 13.5px;
+    margin-bottom: 14px;
+  }
+
+  .scale {
+    display: flex;
+    gap: 8px;
+  }
+
+  .scale button {
+    flex: 1;
+    padding: 10px 8px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    border-radius: 5px;
+    font-family: var(--sans);
+    font-size: 13px;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color .15s, background .15s;
+  }
+
+  .scale button .num {
+    font-family: var(--mono);
+    font-weight: 700;
+    margin-right: 6px;
+  }
+
+  .scale button:hover {
+    border-color: var(--ink);
+  }
+
+  .scale button.active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+
+  .result {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 26px 24px;
+    position: sticky;
+    bottom: 16px;
+  }
+
+  .result-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .score-block {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .score-value {
+    font-family: var(--serif);
+    font-size: 22px;
+    color: var(--ink);
+  }
+
+  .zone-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .zone-auto-badge { background: #e9efe7; color: #3f6b4f; } /* automatisierbar */
+  .zone-aug-badge { background: #f3ecd9; color: #8a6d2f; } /* Augmentation */
+  .zone-human-badge { background: #f3e3e1; color: #7a3b3b; } /* menschgebunden */
+
+  .veto-note {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-left: 3px solid var(--zone-human);
+    background: var(--zone-human-bg);
+    font-size: 13.5px;
+    border-radius: 0 4px 4px 0;
+    display: none;
+  }
+
+  .veto-note.show { display: block; }
+
+  .veto-note.liability {
+    border-left-color: var(--zone-aug);
+    background: var(--zone-aug-bg);
+  }
+
+  .control-model {
+    margin-top: 16px;
+    font-size: 13.5px;
+    color: var(--muted);
+  }
+
+  .control-model b { color: var(--ink); }
+
+  .reset-btn {
+    font: 12.5px var(--sans);
+    color: var(--muted);
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 6px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color .15s, color .15s;
+  }
+  .reset-btn:hover { border-color: var(--ink); color: var(--ink); }
+  .reset-btn:disabled { opacity: .45; cursor: default; }
+  .reset-btn:disabled:hover { border-color: var(--line); color: var(--muted); }
+
+  footer {
+    margin-top: 40px;
+    font-size: 12px;
+    color: var(--muted);
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+  }
+
+  footer a { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Bewertungsraster · Kriterienbasierte Aufgabentypologie</div>
+    <h1>Bleibt diese Aufgabe an den Menschen gebunden?</h1>
+    <div class="subtitle">
+      Ordnet eine FM-Aufgabe anhand fünf struktureller Dimensionen einer von drei
+      Kontrollzonen zu. Zwei Dimensionen wirken als Veto-Kriterium und können die
+      additive Summenlogik außer Kraft setzen.
+    </div>
+  </header>
+
+  <div class="dims" id="dims"></div>
+
+  <div class="result">
+    <div class="result-top">
+      <div class="score-block">
+        Summenwert<br>
+        <span class="score-value" id="sumValue">—</span> / 15
+      </div>
+      <div id="zoneBadge" class="zone-badge">Bitte alle Dimensionen bewerten</div>
+      <button id="resetBtn" class="reset-btn" disabled>Zurücksetzen</button>
+    </div>
+
+    <div class="veto-note" id="vetoPrincipled">
+      <b>Veto (prinzipielle Grenze):</b> <span id="vetoPrincipledDim">Eine prinzipiell menschgebundene Dimension</span> erreicht den Höchstwert (3).
+      Situatives Urteilsvermögen bzw. echte zwischenmenschliche Kompetenz ist nach
+      prinzipieller Grenzziehung (Searle 1980) nicht durch niedrige Werte in den
+      übrigen — kontingenten — Dimensionen kompensierbar. Einordnung unabhängig vom
+      Summenwert: <b>strukturell menschlich gebunden</b>.
+    </div>
+
+    <div class="veto-note liability" id="vetoLiability">
+      <b>Veto (normativ-rechtlich):</b> Haftungsrelevanz = hoch (3). Rechtliche oder
+      finanzielle Verantwortung lässt sich nicht durch niedrige Werte in anderen
+      Dimensionen aufwiegen. Mindesteinordnung: <b>Augmentation-Zone</b>.
+    </div>
+
+    <div class="control-model" id="controlModel"></div>
+  </div>
+
+  <footer>
+    Entwickelt im Rahmen der Bachelorarbeit „Effizienzsteigerung im Facility
+    Management durch den Einsatz von künstlicher Intelligenz: Warum der Mensch
+    unersetzbar bleibt“ — Till Weidert, DHBW Stuttgart / GOLDBECK Facility
+    Services GmbH, 2026.
+  </footer>
+
+</div>
+
+<script>
+const DIMENSIONS = [
+  {
+    id: "ermessen",
+    name: "Ermessensabhängigkeit",
+    tag: "Veto · kategorisch",
+    tagClass: "tag-principled",
+    question: "Erfordert die Aufgabe situatives Urteilsvermögen jenseits fester Regeln?",
+    options: [
+      "Niedrig — folgt einem festen Schema",
+      "Mittel — teils regelbasiert, teils Abwägung",
+      "Hoch — erfordert situatives Urteil jenseits jeder Regel"
+    ],
+    veto: { value: 3, type: "principled" }
+  },
+  {
+    id: "praesenz",
+    name: "Physische Präsenz",
+    tag: null,
+    question: "Erfordert die Aufgabe körperliche Präsenz oder manuelle Tätigkeit vor Ort?",
+    options: [
+      "Niedrig — vollständig auf der Datenebene bearbeitbar",
+      "Mittel — gelegentliche Tätigkeit vor Ort",
+      "Hoch — körperliche Präsenz oder Handarbeit zwingend erforderlich"
+    ]
+  },
+  {
+    id: "sozial",
+    name: "Soziale Komplexität",
+    tag: "Veto · kategorisch",
+    tagClass: "tag-principled",
+    question: "Erfordert die Aufgabe zwischenmenschliche Interaktion und Empathie?",
+    options: [
+      "Niedrig — kein Kundenkontakt",
+      "Mittel — formalisierte Kommunikation",
+      "Hoch — Empathie und Vertrauensbildung zwingend erforderlich"
+    ]
+  },
+  {
+    id: "haftung",
+    name: "Haftungsrelevanz",
+    tag: "Veto · Mindesteinordnung",
+    tagClass: "tag-liability",
+    question: "Trägt die ausführende Instanz rechtliche oder finanzielle Verantwortung?",
+    options: [
+      "Niedrig — formale Verarbeitung ohne Außenwirkung",
+      "Mittel — mittelbare wirtschaftliche Relevanz",
+      "Hoch — unmittelbare rechtliche/finanzielle Verbindlichkeit"
+    ],
+    veto: { value: 3, type: "liability" }
+  },
+  {
+    id: "ausnahme",
+    name: "Ausnahmefrequenz",
+    tag: null,
+    question: "Wie häufig treten untypische, nicht standardisierte Konstellationen auf?",
+    options: [
+      "Niedrig — weitgehend standardisierte Fälle",
+      "Mittel — gelegentliche Abweichungen",
+      "Hoch — jeder Fall ist ein Einzelfall"
+    ]
+  }
+];
+
+const state = {};
+
+function buildUI() {
+  // baut die 5 Karten aus DIMENSIONS auf
+  const container = document.getElementById("dims");
+  for (let i = 0; i < DIMENSIONS.length; i++) {
+    const dim = DIMENSIONS[i];
+    const el = document.createElement("div");
+    el.className = "dim";
+    el.innerHTML = `
+      <div class="dim-head">
+        <div class="dim-name">${dim.name}</div>
+        ${dim.tag ? `<div class="dim-tag ${dim.tagClass}">${dim.tag}</div>` : ""}
+      </div>
+      <div class="dim-question">${dim.question}</div>
+      <div class="scale" data-dim="${dim.id}">
+        ${dim.options.map((opt, i) => `
+          <button data-val="${i + 1}">
+            <span class="num">${i + 1}</span>${opt}
+          </button>
+        `).join("")}
+      </div>
+    `;
+    container.appendChild(el);
+
+    el.querySelectorAll(".scale button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        state[dim.id] = parseInt(btn.dataset.val, 10);
+        el.querySelectorAll(".scale button").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        evaluate();
+      });
+    });
+  }
+}
+
+function evaluate() {
+  // Reset-Button nur aktiv, wenn ueberhaupt schon was ausgewaehlt wurde
+  document.getElementById("resetBtn").disabled = !Object.keys(state).length;
+
+  const ids = DIMENSIONS.map(d => d.id);
+  const allSet = ids.every(id => state[id] !== undefined);
+
+  const sumEl = document.getElementById("sumValue");
+  const badgeEl = document.getElementById("zoneBadge");
+  const vetoP = document.getElementById("vetoPrincipled");
+  const vetoL = document.getElementById("vetoLiability");
+  const controlEl = document.getElementById("controlModel");
+
+  vetoP.classList.remove("show");
+  vetoL.classList.remove("show");
+
+  if (!allSet) {
+    sumEl.textContent = "—";
+    badgeEl.className = "zone-badge";
+    badgeEl.textContent = "Bitte alle Dimensionen bewerten";
+    controlEl.textContent = "";
+    return;
+  }
+
+  const sum = ids.reduce((acc, id) => acc + state[id], 0);
+  sumEl.textContent = sum;
+
+  // Ermessen oder Sozial auf hoechster Stufe -> kategorisches Veto (siehe Kap. 7.3)
+  const principledVeto = state["ermessen"] === 3 || state["sozial"] === 3;
+  const liabilityVeto = state["haftung"] === 3; // hebt nur an, kein hartes Veto
+
+  let zone, controlModelText;
+
+  if (principledVeto) {
+    zone = "human";
+    const dimLabel = state["ermessen"] === 3 && state["sozial"] === 3
+      ? "Ermessensabhängigkeit und soziale Komplexität"
+      : (state["ermessen"] === 3 ? "Ermessensabhängigkeit" : "Soziale Komplexität");
+    const dimSpan = document.getElementById("vetoPrincipledDim");
+    if (dimSpan) dimSpan.textContent = dimLabel;
+    vetoP.classList.add("show");
+  } else if (sum >= 12) {
+    zone = "human";
+  } else if (sum >= 8) {
+    zone = "aug";
+  } else {
+    zone = liabilityVeto ? "aug" : "auto";
+    if (liabilityVeto && sum <= 7) vetoL.classList.add("show");
+  }
+
+  if (zone === "auto") {
+    badgeEl.className = "zone-badge zone-auto-badge";
+    badgeEl.textContent = "Strukturell automatisierbar";
+    controlModelText = "<b>Human-on-the-Loop (HOTL):</b> hoher Automatisierungsgrad mit nachgelagerter menschlicher Aufsicht.";
+  } else if (zone === "aug") {
+    badgeEl.className = "zone-badge zone-aug-badge";
+    badgeEl.textContent = "Augmentation-Zone";
+    controlModelText = "<b>Human-in-the-Loop (HITL):</b> Mensch und KI wirken komplementär zusammen, aktives Eingriffsrecht des Menschen.";
+  } else {
+    badgeEl.className = "zone-badge zone-human-badge";
+    badgeEl.textContent = "Strukturell menschlich gebunden";
+    controlModelText = "<b>Human-in-Command:</b> Entscheidungsverantwortung verbleibt durchgängig beim Menschen.";
+  }
+
+  controlEl.innerHTML = controlModelText;
+}
+
+function resetAll() {
+  DIMENSIONS.forEach(d => delete state[d.id]);
+  document.querySelectorAll(".scale button.active").forEach(b => b.classList.remove("active"));
+  evaluate();
+}
+
+document.getElementById("resetBtn").addEventListener("click", resetAll);
+
+buildUI();
+evaluate();
+</script>
+
+</body>
+</html>
